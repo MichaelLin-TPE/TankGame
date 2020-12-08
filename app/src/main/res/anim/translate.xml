@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--    duration 動畫持續的時間
+            fromXDelta 起始X座標偏移量
+            toXDelta 結束X座標偏移量
+            fromYDelta 起始Y座標偏移量
+            toYDelta 結束Y座標偏移量-->
+
+    <translate
+        android:duration="2000"
+        android:fromXDelta="0"
+        android:fromYDelta="0"
+        android:toXDelta="100%"
+        android:toYDelta="100%"/>
+</set>

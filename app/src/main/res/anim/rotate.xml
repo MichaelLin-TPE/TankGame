@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--    duration 動畫持續的時間
+            fromDegrees 旋轉開始的角度
+            toDegrees 旋轉結束的角度
+            pivotX 旋轉中心點的X座標
+            pivotY 旋轉中心點的Y座標-->
+
+    <rotate
+        android:duration="1000"
+        android:fromDegrees="0"
+        android:toDegrees="3060"
+        android:pivotX="50%"
+        android:pivotY="50%" />
+</set>
