@@ -1,22 +1,23 @@
 package com.example.tankgame;
 
+import android.animation.Animator;
+import android.animation.AnimatorInflater;
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Bitmap;
+
 import android.graphics.Canvas;
 import android.graphics.Color;
+
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.drawable.BitmapDrawable;
+
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewTreeObserver;
-import android.view.animation.AnimationUtils;
-import android.view.animation.RotateAnimation;
+
 import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
 
@@ -26,10 +27,11 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 
 public class MapView extends ConstraintLayout {
 
-    private float maxRight, maxBottom, middleX, middleY,currentTankX , currentTankY ,moveTankX,moveTankY;
+    private float maxRight, maxBottom, middleX, middleY, currentTankX, currentTankY, moveTankX, moveTankY, bulletY, bulletX;
 
+    private float currentEnemyTankX, currentEnemyTankY, moveEnemyTankX, moveEnemyTankY,enemyBulletY,enemyBulletX;
 
-    private boolean isLeft,isRight,isTop,isDown;
+    private boolean isLeft, isRight, isTop, isDown;
 
     public static final String LEFT = "left";
 
@@ -39,17 +41,21 @@ public class MapView extends ConstraintLayout {
 
     public static final String DOWN = "down";
 
+    public static final int MOVE_SPEED = 200;
+
+    public static final int BULLET_SPEED = 10;
+
+    public static final int FIRE_SPEED = 2000;
+
     private Paint paint;
 
     private View view;
 
-    private ImageView ivTank,ivUserFire;
+    private ImageView ivTank, ivUserFire, ivEnemyTank,ivExplosion,ivEnemyFire;
 
     private ConstraintLayout rootView;
 
-    private TranslateAnimation translateAnimation;
-
-    private Handler handler  = new Handler(Looper.getMainLooper());
+    private Handler handler = new Handler(Looper.getMainLooper());
 
     public MapView(@NonNull Context context) {
         super(context);
@@ -71,6 +77,48 @@ public class MapView extends ConstraintLayout {
         view = View.inflate(getContext(), R.layout.map_layout, this);
         rootView = view.findViewById(R.id.root_view);
         maxRight = view.getRight();
+        rootView.removeAllViews();
+
+        //設置 View出現需要出現的東西
+        ivTank = new ImageView(getContext());
+        ivUserFire = new ImageView(getContext());
+        ivEnemyTank = new ImageView(getContext());
+        ivExplosion = new ImageView(getContext());
+        ivEnemyFire = new ImageView(getContext());
+        rootView.addView(ivExplosion);
+        rootView.addView(ivEnemyTank);
+        rootView.addView(ivTank);
+        rootView.addView(ivUserFire);
+        rootView.addView(ivEnemyFire);
+        //爆炸效果設置
+        ivExplosion.getLayoutParams().width = DpConvertTool.getInstance().getDb(40);
+        ivExplosion.getLayoutParams().height = DpConvertTool.getInstance().getDb(40);
+        ivExplosion.setImageResource(R.drawable.explosion);
+        ivExplosion.setVisibility(INVISIBLE);
+
+        //敵人的子彈
+        ivEnemyFire.getLayoutParams().width = DpConvertTool.getInstance().getDb(5);
+        ivEnemyFire.getLayoutParams().height = DpConvertTool.getInstance().getDb(5);
+        ivEnemyFire.setBackgroundResource(R.drawable.user_fire_shape);
+        ivUserFire.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        ivEnemyFire.setVisibility(INVISIBLE);
+
+        //自己的子彈
+        ivUserFire.getLayoutParams().width = DpConvertTool.getInstance().getDb(5);
+        ivUserFire.getLayoutParams().height = DpConvertTool.getInstance().getDb(5);
+        ivUserFire.setBackgroundResource(R.drawable.user_fire_shape);
+        ivUserFire.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        ivUserFire.setVisibility(INVISIBLE);
+
+        //自己坦克設定高寬
+        ivTank.getLayoutParams().width = DpConvertTool.getInstance().getDb(50);
+        ivTank.getLayoutParams().height = DpConvertTool.getInstance().getDb(50);
+        ivTank.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
+        //敵人坦克設定高寬
+        ivEnemyTank.getLayoutParams().width = DpConvertTool.getInstance().getDb(50);
+        ivEnemyTank.getLayoutParams().height = DpConvertTool.getInstance().getDb(50);
+        ivEnemyTank.setScaleType(ImageView.ScaleType.CENTER_CROP);
     }
 
     @SuppressLint("DrawAllocation")
@@ -79,86 +127,423 @@ public class MapView extends ConstraintLayout {
         Log.i("Michael", "onDraw");
 
 
-
         Log.i("Michael", "initView left : " + view.getLeft() + " , right : " + view.getRight() + " , top : " + view.getTop() + " , bottom : " + view.getBottom());
         middleX = (float) view.getRight() / 2;
         middleY = (float) view.getBottom() / 2;
         maxBottom = (float) view.getBottom();
         maxRight = (float) view.getRight();
 
-        float leftUpY = middleY - 100;
+        //先去掉線
 
-        float rightUpY = middleY - 100;
+//        float leftUpY = middleY - 100;
+//
+//        float rightUpY = middleY - 100;
+//
+//        float leftUpX = middleX - 100;
+//
+//        float rightUpX = middleX + 100;
+//
+//        float leftDownX = middleX - 100;
+//
+//        float rightDownX = middleX + 100;
+//
+//        float leftDownY = middleY + 100;
+//
+//        paint = new Paint();
+//        paint.setStrokeWidth(5f);
+//        paint.setColor(Color.GRAY);
+//        paint.setStyle(Paint.Style.STROKE);
+//        Path path = new Path();
+//        //左邊的線
+//        path.moveTo(0f, leftUpY);
+//        path.lineTo(leftUpX, leftUpY);
+//        path.lineTo(leftUpX, 0f);
+//
+//        //右邊邊的線
+//        path.moveTo(maxRight, rightUpY);
+//        path.lineTo(rightUpX, rightUpY);
+//        path.lineTo(rightUpX, 0f);
+//
+//
+//        //左下的線
+//        path.moveTo(leftDownX, maxBottom);
+//        path.lineTo(leftDownX, leftDownY);
+//        path.lineTo(0, leftDownY);
+//
+//        //右下的線
+//        path.moveTo(rightDownX, maxBottom);
+//        path.lineTo(rightDownX, leftDownY);
+//        path.lineTo(maxRight, leftDownY);
+//
+//        canvas.drawPath(path, paint);
 
-        float leftUpX = middleX - 100;
-
-        float rightUpX = middleX + 100;
-
-        float leftDownX = middleX - 100;
-
-        float rightDownX = middleX + 100;
-
-        float leftDownY = middleY + 100;
-
-        paint = new Paint();
-        paint.setStrokeWidth(5f);
-        paint.setColor(Color.GRAY);
-        paint.setStyle(Paint.Style.STROKE);
-        Path path = new Path();
-        //左邊的線
-        path.moveTo(0f, leftUpY);
-        path.lineTo(leftUpX, leftUpY);
-        path.lineTo(leftUpX, 0f);
-
-        //右邊邊的線
-        path.moveTo(maxRight, rightUpY);
-        path.lineTo(rightUpX, rightUpY);
-        path.lineTo(rightUpX, 0f);
+        //敵人坦克的位置
+        Log.i("Michael", "enemyTank width : " + ivEnemyTank.getWidth());
+        currentEnemyTankX = maxRight - ivEnemyTank.getWidth();
+        currentEnemyTankY = middleY - 80f;
+        moveEnemyTankX = currentEnemyTankX;
+        moveEnemyTankY = currentEnemyTankY;
+        ivEnemyTank.setX(currentEnemyTankX);
+        ivEnemyTank.setY(currentEnemyTankY);
+        ivEnemyTank.setImageResource(R.drawable.tank);
+        ivEnemyTank.setRotation(-90f);
 
 
-        //左下的線
-        path.moveTo(leftDownX, maxBottom);
-        path.lineTo(leftDownX, leftDownY);
-        path.lineTo(0, leftDownY);
-
-        //右下的線
-        path.moveTo(rightDownX, maxBottom);
-        path.lineTo(rightDownX, leftDownY);
-        path.lineTo(maxRight, leftDownY);
-
-        canvas.drawPath(path, paint);
-
-        rootView.removeAllViews();
-
-        ivTank = new ImageView(getContext());
-        ivUserFire = new ImageView(getContext());
-        rootView.addView(ivUserFire);
-        rootView.addView(ivTank);
-        ivUserFire.getLayoutParams().width = DpConvertTool.getInstance().getDb(5);
-
-        ivUserFire.getLayoutParams().height = DpConvertTool.getInstance().getDb(5);
-
-        ivTank.getLayoutParams().width = DpConvertTool.getInstance().getDb(50);
-
-        ivTank.getLayoutParams().height = DpConvertTool.getInstance().getDb(50);
-        ivTank.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        //先隱藏起來
-        ivUserFire.setBackgroundResource(R.drawable.user_fire_shape);
-        ivUserFire.setVisibility(INVISIBLE);
+        //自己坦克的位置
         currentTankX = 50f;
-        currentTankY = middleY - 80 ;
+        currentTankY = middleY - 80;
         moveTankX = currentTankX;
         moveTankY = currentTankY;
-
         ivTank.setX(currentTankX);
         ivTank.setY(currentTankY);
         ivTank.setImageResource(R.drawable.tank);
         ivTank.setRotation(90f);
-//        translateAnimation = new TranslateAnimation(0f,10f,0,0f);
-//        translateAnimation.setDuration(1000);
-//        translateAnimation.setFillAfter(true);
-//        ivTank.startAnimation(translateAnimation);
+
+
+        startEnemyTankPath();
+
     }
+
+    //自定義敵人坦克的路徑
+    private void startEnemyTankPath() {
+
+        //PK mode
+//        handler.postDelayed(pkModeTankRunnable,2000);
+        //自定義路線
+        handler.postDelayed(enemyTankLeftPathRunnable, MOVE_SPEED);
+    }
+
+
+    private Runnable pkModeTankRunnable = new Runnable() {
+        @Override
+        public void run() {
+
+            float fireRangeY = Math.abs((currentEnemyTankY - currentTankY));
+            Log.i("Michael","myTank : "+currentTankX+" enemyTankY : "+currentEnemyTankX +" fireRangeY : "+fireRangeY);
+            //如果 X 在同層的話，還要判斷是在上下左右發射
+
+            boolean isSameY = fireRangeY <= ivTank.getHeight();
+
+            boolean isTankLeft = currentEnemyTankX >= currentTankX;
+
+            boolean isTankRight = currentEnemyTankX <= currentTankX;
+
+            if(isSameY){
+                Log.i("Michael","Y在同一層上");
+                enemyFire(isTankLeft,isTankRight,false,false);
+                handler.postDelayed(pkModeTankRunnable,2000);
+                return;
+            }
+
+            float fireRangeX = Math.abs((currentEnemyTankX - currentTankX));
+
+            boolean isSameX = fireRangeX <= ivTank.getHeight();
+
+            boolean isTankTop = currentEnemyTankY >= currentTankY;
+
+            boolean isTankDown = currentEnemyTankY <= currentTankY;
+            if(isSameX){
+                Log.i("Michael","X 在同一層上");
+                enemyFire(false,false,isTankTop,isTankDown);
+            }
+
+
+            handler.postDelayed(pkModeTankRunnable,2000);
+
+
+        }
+    };
+    //敵人射擊 判斷方向
+    private void enemyFire(boolean isTankLeft, boolean isTankRight, boolean isTankTop, boolean isTankDown) {
+
+        ivEnemyFire.setVisibility(VISIBLE);
+
+        if (isTankLeft){
+            ivEnemyTank.setImageResource(R.drawable.tank);
+            ivEnemyTank.setRotation(-90f);
+
+            enemyBulletX = ivEnemyTank.getX();
+            enemyBulletY = ivEnemyTank.getY() + (ivEnemyTank.getHeight() / 2f) - (ivEnemyFire.getHeight() / 2f);
+            handler.postDelayed(enemyFireLeftBulletRunnable,BULLET_SPEED);
+
+            return;
+        }
+
+        if (isTankRight){
+            ivEnemyTank.setImageResource(R.drawable.tank);
+            ivEnemyTank.setRotation(90f);
+
+            enemyBulletY = ivEnemyTank.getY() + (ivEnemyTank.getHeight() / 2f) - (ivEnemyFire.getHeight() / 2f);
+            enemyBulletX = ivEnemyTank.getX() + (ivEnemyTank.getWidth());
+            handler.postDelayed(enemyFireRightBulletRunnable,BULLET_SPEED);
+
+            return;
+
+        }
+
+        if (isTankDown){
+            ivEnemyTank.setImageResource(R.drawable.tank);
+            ivEnemyTank.setRotation(180f);
+
+            enemyBulletY = ivEnemyTank.getY() + ivEnemyTank.getHeight();
+            enemyBulletX = ivEnemyTank.getX() + (ivEnemyTank.getWidth() / 2f) - (ivEnemyFire.getHeight() / 2f);
+            handler.postDelayed(enemyFireDownBulletRunnable,BULLET_SPEED);
+
+
+            return;
+        }
+
+        if (isTankTop){
+            ivEnemyTank.setImageResource(R.drawable.tank);
+            ivEnemyTank.setRotation(0f);
+
+            enemyBulletY = ivEnemyTank.getY();
+            enemyBulletX = ivEnemyTank.getX() + (ivEnemyTank.getWidth() / 2f) - (ivEnemyFire.getHeight() / 2f);
+
+            handler.postDelayed(enemyFireTopBulletRunnable,BULLET_SPEED);
+            return;
+        }
+
+    }
+    //敵人命中玩家
+    private boolean isTankHit() {
+
+
+
+        float hitRangeTopY = enemyBulletY - currentTankY;
+
+        boolean isHitTopY = enemyBulletY >= currentTankY && hitRangeTopY < ivTank.getHeight();
+
+        float hitRangeX = Math.abs(enemyBulletX - currentTankX);
+
+
+        //do here
+        boolean isHitTop = isHitTopY && hitRangeX <= ivTank.getWidth() && enemyBulletX != 0 & enemyBulletY != 0;
+        if (isHitTop){
+            clearEnemyTankPathHandler();
+            currentTankY = 0;
+            currentTankX = 0;
+            ivTank.setVisibility(INVISIBLE);
+            showEnemyExplosion();
+
+            Log.i("Michael","命中上部");
+            return true;
+        }
+
+        float bottomY = currentTankY + ivTank.getHeight() - 20f;
+
+        float hitRangeDownY = Math.abs(enemyBulletY - bottomY);
+
+        boolean isHitDownY = enemyBulletY <= bottomY && hitRangeDownY <= ivTank.getHeight();
+
+        Log.i("Michael","子彈 Y：" + enemyBulletY +"計算出來的距離 Y : "+hitRangeDownY + " , X : "+hitRangeX +" , tank Y : "+bottomY);
+
+        boolean isHitDown = isHitDownY && hitRangeX <= ivTank.getWidth() && enemyBulletX != 0 & enemyBulletY != 0;
+
+        if (isHitDown){
+            clearEnemyTankPathHandler();
+            currentTankY = 0;
+            currentTankX = 0;
+            ivTank.setVisibility(INVISIBLE);
+            showEnemyExplosion();
+            Log.i("Michael","命中底部");
+            return true;
+        }
+
+
+        return false;
+    }
+
+    private void showEnemyExplosion() {
+        ivExplosion.setX(ivTank.getX());
+        ivExplosion.setY(ivTank.getY());
+        ivExplosion.setVisibility(VISIBLE);
+        Animator animator = AnimatorInflater.loadAnimator(getContext(),R.animator.scale_anim);
+        animator.setTarget(ivExplosion);
+        animator.start();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                ivExplosion.setVisibility(INVISIBLE);
+                handler.removeCallbacks(this);
+            }
+        },1500);
+    }
+
+    //清除敵人的Handler
+    private void stopEnemyBullet() {
+        handler.removeCallbacks(enemyFireLeftBulletRunnable);
+        handler.removeCallbacks(enemyFireRightBulletRunnable);
+        handler.removeCallbacks(enemyFireTopBulletRunnable);
+        handler.removeCallbacks(enemyFireDownBulletRunnable);
+        ivEnemyFire.setVisibility(INVISIBLE);
+    }
+    //敵人子彈往左飛
+    private Runnable enemyFireLeftBulletRunnable = new Runnable() {
+        @Override
+        public void run() {
+
+            enemyBulletX -= 5;
+
+            if (isTankHit()) {
+
+                stopEnemyBullet();
+                return;
+            }
+
+            if (enemyBulletX <= 0) {
+                stopEnemyBullet();
+                return;
+            }
+
+            ivEnemyFire.setY(enemyBulletY);
+            ivEnemyFire.setX(enemyBulletX);
+            handler.postDelayed(this, BULLET_SPEED);
+        }
+    };
+
+    //敵人子彈往右飛
+    private Runnable enemyFireRightBulletRunnable = new Runnable() {
+        @Override
+        public void run() {
+            enemyBulletX += 20;
+
+            if (isTankHit()) {
+                stopEnemyBullet();
+                return;
+            }
+
+            if (enemyBulletX >= maxRight) {
+                stopEnemyBullet();
+                return;
+            }
+            ivEnemyFire.setY(enemyBulletY);
+            ivEnemyFire.setX(enemyBulletX);
+            handler.postDelayed(this, BULLET_SPEED);
+        }
+    };
+
+
+    //敵人子彈往上飛
+    private Runnable enemyFireTopBulletRunnable = new Runnable() {
+        @Override
+        public void run() {
+            enemyBulletY -= 20;
+
+            if (isTankHit()) {
+                stopEnemyBullet();
+                return;
+            }
+
+            if (enemyBulletX <= 0) {
+                stopEnemyBullet();
+                return;
+            }
+            ivEnemyFire.setY(enemyBulletY);
+            ivEnemyFire.setX(enemyBulletX);
+            handler.postDelayed(this, BULLET_SPEED);
+        }
+    };
+
+    //敵人子彈往下飛
+    private Runnable enemyFireDownBulletRunnable = new Runnable() {
+        @Override
+        public void run() {
+            enemyBulletY += 20;
+
+            if (isTankHit()) {
+                stopEnemyBullet();
+                return;
+            }
+
+            if (enemyBulletX >= maxBottom) {
+                stopEnemyBullet();
+                return;
+            }
+            ivEnemyFire.setY(enemyBulletY);
+            ivEnemyFire.setX(enemyBulletX);
+            handler.postDelayed(this, BULLET_SPEED);
+        }
+    };
+
+
+
+    //自定義的路線
+    private Runnable enemyTankLeftPathRunnable = new Runnable() {
+        @Override
+        public void run() {
+
+            //先測試
+            moveEnemyTankX -= 20;
+            if (moveEnemyTankX <= 0f) {
+                moveEnemyTop();
+                handler.removeCallbacks(this);
+                return;
+            }
+            currentEnemyTankX = moveEnemyTankX;
+            setEnemyImageLocation();
+            handler.postDelayed(this, MOVE_SPEED);
+        }
+    };
+
+    private void moveEnemyTop() {
+        handler.postDelayed(enemyTankTopPathRunnable, MOVE_SPEED);
+    }
+
+    private Runnable enemyTankTopPathRunnable = new Runnable() {
+        @Override
+        public void run() {
+            ivEnemyTank.setImageResource(R.drawable.tank);
+            ivEnemyTank.setRotation(0f);
+            moveEnemyTankY -= 20;
+
+            if (moveEnemyTankY <= 0) {
+                moveEnemyDown();
+                handler.removeCallbacks(this);
+                return;
+            }
+            currentEnemyTankY = moveEnemyTankY;
+            setEnemyImageLocation();
+            handler.postDelayed(this, MOVE_SPEED);
+        }
+    };
+
+    private void moveEnemyDown() {
+        handler.postDelayed(enemyTankDownPathRunnable,MOVE_SPEED);
+    }
+
+    private Runnable enemyTankDownPathRunnable = new Runnable() {
+        @Override
+        public void run() {
+            ivEnemyTank.setImageResource(R.drawable.tank);
+            ivEnemyTank.setRotation(180f);
+            moveEnemyTankY += 20;
+
+            if (moveEnemyTankY >= maxBottom - ivEnemyTank.getHeight()) {
+
+
+
+                handler.removeCallbacks(this);
+                return;
+            }
+            currentEnemyTankY = moveEnemyTankY;
+            setEnemyImageLocation();
+            handler.postDelayed(this, MOVE_SPEED);
+        }
+    };
+
+
+    private void clearEnemyTankPathHandler() {
+        handler.removeCallbacks(enemyTankTopPathRunnable);
+        handler.removeCallbacks(enemyTankLeftPathRunnable);
+        handler.removeCallbacks(pkModeTankRunnable);
+    }
+
+    private void setEnemyImageLocation() {
+        ivEnemyTank.setX(currentEnemyTankX);
+        ivEnemyTank.setY(currentEnemyTankY);
+    }
+
 
     //按往上的時候
     public void onButtonUpClickListener() {
@@ -169,10 +554,12 @@ public class MapView extends ConstraintLayout {
     public void onButtonDownClickListener() {
         moveDown();
     }
+
     //按往左的時候
     public void onButtonLeftClickListener() {
         moveLeft();
     }
+
     //按往右的時候
     public void onButtonRightClickListener() {
         moveRight();
@@ -180,73 +567,75 @@ public class MapView extends ConstraintLayout {
 
     //長按系列
     public void onButtonDownLongPressListener() {
-        handler.postDelayed(downLongRunnable,200);
+        handler.postDelayed(downLongRunnable, MOVE_SPEED);
     }
 
     private Runnable downLongRunnable = new Runnable() {
         @Override
         public void run() {
             moveDown();
-            handler.postDelayed(this,200);
+            handler.postDelayed(this, MOVE_SPEED);
 
         }
     };
 
     public void onButtonUpLongPressListener() {
-        handler.postDelayed(upLongRunnable,200);
+        handler.postDelayed(upLongRunnable, MOVE_SPEED);
     }
 
     private Runnable upLongRunnable = new Runnable() {
         @Override
         public void run() {
             moveTop();
-            handler.postDelayed(this,200);
+            handler.postDelayed(this, MOVE_SPEED);
         }
     };
 
     public void onButtonLeftLongPressListener() {
-       handler.postDelayed(leftLongRunnable,200);
+        handler.postDelayed(leftLongRunnable, MOVE_SPEED);
     }
 
     private Runnable leftLongRunnable = new Runnable() {
         @Override
         public void run() {
             moveLeft();
-            handler.postDelayed(this,200);
+            handler.postDelayed(this, MOVE_SPEED);
         }
     };
 
     public void onButtonRightLongPressListener() {
-        handler.postDelayed(rightLongRunnable,200);
+        handler.postDelayed(rightLongRunnable, MOVE_SPEED);
     }
 
     private Runnable rightLongRunnable = new Runnable() {
         @Override
         public void run() {
             moveRight();
-            handler.postDelayed(this,200);
+            handler.postDelayed(this, MOVE_SPEED);
         }
     };
 
-    private void moveDown(){
+    private void moveDown() {
         ivTank.setImageResource(R.drawable.tank);
         ivTank.setRotation(180f);
 
         moveTankY += 20;
-        if (moveTankY >= maxBottom){
+        if (moveTankY >= maxBottom) {
             moveTankY = currentTankY;
         }
 
         currentTankY = moveTankY;
+        Log.i("Michael", "X : " + currentTankX + " , Y : " + currentTankY);
+
         checkStatus(DOWN);
         setImageLocation();
     }
 
-    private void moveTop(){
+    private void moveTop() {
         ivTank.setImageResource(R.drawable.tank);
         ivTank.setRotation(0f);
         moveTankY -= 20;
-        if (moveTankY <= 0){
+        if (moveTankY <= 0) {
             moveTankY = currentTankY;
         }
         currentTankY = moveTankY;
@@ -254,12 +643,12 @@ public class MapView extends ConstraintLayout {
         setImageLocation();
     }
 
-    private void moveLeft(){
+    private void moveLeft() {
         ivTank.setImageResource(R.drawable.tank);
         ivTank.setRotation(-90f);
 
         moveTankX -= 20;
-        if (moveTankX <= 0){
+        if (moveTankX <= 0) {
             moveTankX = currentTankX;
         }
 
@@ -268,14 +657,15 @@ public class MapView extends ConstraintLayout {
         setImageLocation();
     }
 
-    private void moveRight(){
+    private void moveRight() {
         ivTank.setImageResource(R.drawable.tank);
         ivTank.setRotation(90f);
         moveTankX += 20;
-        Log.i("Michael","x : "+moveTankX + " , maxX : "+maxRight);
-        if (moveTankX >= maxRight){
+
+        if (moveTankX >= maxRight) {
             moveTankX = currentTankX;
         }
+
         currentTankX = moveTankX;
         checkStatus(RIGHT);
         setImageLocation();
@@ -285,31 +675,264 @@ public class MapView extends ConstraintLayout {
     private void setImageLocation() {
         ivTank.setX(currentTankX);
         ivTank.setY(currentTankY);
-        ivUserFire.setX(currentTankX);
-        ivUserFire.setY(currentTankY);
+//        ivUserFire.setX(currentTankX);
+//        ivUserFire.setY(currentTankY);
     }
+
     //按開火的時候
     public void onButtonFireClickListener() {
+
         ivUserFire.setVisibility(VISIBLE);
-        int[] location = new int[2];
-        ivTank.getLocationOnScreen(location);
 
-        ivUserFire.setY(location[1]);
-        ivUserFire.setX(currentTankX);
+        if (isRight) {
 
-        if (isRight){
-            TranslateAnimation translateAnimation = new TranslateAnimation(0f,100f,0f,0f);
-            translateAnimation.setDuration(1000);
-            translateAnimation.setFillAfter(true);
-            ivUserFire.startAnimation(translateAnimation);
+            bulletY = ivTank.getY() + (ivTank.getHeight() / 2f) - (ivUserFire.getHeight() / 2f);
+            bulletX = ivTank.getX() + (ivTank.getWidth());
+
+            doBulletFly();
+
+            return;
+        }
+        if (isLeft) {
+
+            bulletY = ivTank.getY() + (ivTank.getHeight() / 2f) - (ivUserFire.getHeight() / 2f);
+            bulletX = ivTank.getX();
+
+
+            doBulletFly();
+            return;
+        }
+        if (isTop) {
+            bulletY = ivTank.getY();
+            bulletX = ivTank.getX() + (ivTank.getWidth() / 2f) - (ivUserFire.getHeight() / 2f);
+
+            doBulletFly();
+            return;
+        }
+        if (isDown) {
+
+            bulletY = ivTank.getY() + ivTank.getHeight();
+            bulletX = ivTank.getX() + (ivTank.getWidth() / 2f) - (ivUserFire.getHeight() / 2f);
+            doBulletFly();
+            return;
+        }
+        bulletY = ivTank.getY() + (ivTank.getHeight() / 2f) - (ivUserFire.getHeight() / 2f);
+        bulletX = ivTank.getX() + (ivTank.getWidth());
+        doBulletFly();
+    }
+
+    private void doBulletFly() {
+        if (isRight) {
+            handler.postDelayed(bulletFlyRightRunnable, BULLET_SPEED);
+            return;
+        }
+        if (isLeft) {
+            handler.postDelayed(bulletFlyLeftRunnable, BULLET_SPEED);
             return;
         }
 
+        if (isDown) {
+            handler.postDelayed(bulletFlyDownRunnable, BULLET_SPEED);
+            return;
+        }
+        if (isTop) {
+            handler.postDelayed(bulletFlyTopRunnable, BULLET_SPEED);
+            return;
+        }
+        handler.postDelayed(bulletFlyRightRunnable, BULLET_SPEED);
 
     }
 
+    private Runnable bulletFlyRightRunnable = new Runnable() {
+        @Override
+        public void run() {
+
+            bulletX += 20;
+
+            if (isStraightHit()) {
+                stopBullet();
+                return;
+            }
+            if (bulletX >= maxRight) {
+                stopBullet();
+                return;
+            }
+            ivUserFire.setY(bulletY);
+            ivUserFire.setX(bulletX);
+            handler.postDelayed(this, BULLET_SPEED);
+
+        }
+    };
+
+
+    private Runnable bulletFlyLeftRunnable = new Runnable() {
+        @Override
+        public void run() {
+            bulletX -= 20;
+
+            if (isStraightHit()) {
+                stopBullet();
+                return;
+            }
+
+            if (bulletX <= 0) {
+                stopBullet();
+                return;
+            }
+            ivUserFire.setY(bulletY);
+            ivUserFire.setX(bulletX);
+            handler.postDelayed(this, BULLET_SPEED);
+        }
+    };
+
+    private Runnable bulletFlyDownRunnable = new Runnable() {
+        @Override
+        public void run() {
+            bulletY += 20;
+
+            if (isHorizontalHit()) {
+                stopBullet();
+                return;
+            }
+
+            if (bulletY >= maxBottom) {
+                stopBullet();
+                return;
+            }
+            ivUserFire.setY(bulletY);
+            ivUserFire.setX(bulletX);
+            handler.postDelayed(this, BULLET_SPEED);
+        }
+    };
+
+    private Runnable bulletFlyTopRunnable = new Runnable() {
+        @Override
+        public void run() {
+            bulletY -= 20;
+            if (isHorizontalHit()) {
+                stopBullet();
+                return;
+            }
+            if (bulletY <= 0) {
+                stopBullet();
+                return;
+            }
+            ivUserFire.setY(bulletY);
+            ivUserFire.setX(bulletX);
+            handler.postDelayed(this, BULLET_SPEED);
+        }
+    };
+    private boolean isHorizontalHit() {
+
+        float hitRangeRightX = bulletX - currentEnemyTankX;
+
+        boolean isHitRightX = bulletX >= currentEnemyTankX && hitRangeRightX < ivTank.getHeight();
+
+        float hitRangeY = Math.abs(bulletY - currentEnemyTankY);
+
+        boolean isHitRight = isHitRightX && hitRangeY <= ivTank.getWidth() && bulletX != 0 && bulletY != 0;
+
+        if (isHitRight){
+            clearEnemyTankPathHandler();
+            currentEnemyTankY = 0;
+            currentEnemyTankX = 0;
+            ivEnemyTank.setVisibility(INVISIBLE);
+            showExplosion();
+            Log.i("Michael","命中上部");
+            return true;
+        }
+
+        float leftX = currentEnemyTankX +ivTank.getHeight();
+
+        float hitRangeLeftX = Math.abs(bulletX - leftX);
+
+        boolean isHitLeftX = bulletX <= leftX && hitRangeLeftX <= ivTank.getHeight();
+
+        boolean isHitLeft = isHitLeftX && hitRangeY <= ivTank.getWidth() && bulletX != 0 && bulletY != 0;
+
+        if (isHitLeft){
+            clearEnemyTankPathHandler();
+            currentEnemyTankY = 0;
+            currentEnemyTankX = 0;
+            ivEnemyTank.setVisibility(INVISIBLE);
+            showExplosion();
+            Log.i("Michael","命中底部");
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isStraightHit() {
+
+        float hitRangeTopY = bulletY - currentEnemyTankY;
+
+        boolean isHitTopY = bulletY >= currentEnemyTankY && hitRangeTopY < ivTank.getHeight();
+
+        float hitRangeX = Math.abs(bulletX - currentEnemyTankX);
+
+        Log.i("Michael","上部Log , 子彈 Ｙ："+bulletY+" , 坦克上部Ｙ："+currentEnemyTankY+" , rangeY : "+hitRangeTopY+" , rangeX : "+hitRangeX);
+        //do here
+        boolean isHitTop = isHitTopY && hitRangeX <= ivTank.getWidth() && bulletX != 0 & bulletY != 0;
+        if (isHitTop){
+            clearEnemyTankPathHandler();
+            currentEnemyTankY = 0;
+            currentEnemyTankX = 0;
+            ivEnemyTank.setVisibility(INVISIBLE);
+            showExplosion();
+            Log.i("Michael","命中上部");
+            return true;
+        }
+
+        float bottomY = currentEnemyTankY + ivTank.getHeight() - 20f;
+
+        float hitRangeDownY = Math.abs(bulletY - bottomY);
+
+        boolean isHitDownY = bulletY <= bottomY && hitRangeDownY <= ivTank.getHeight();
+
+        boolean isHitDown = isHitDownY && hitRangeX <= ivTank.getWidth() && bulletX != 0 & bulletY != 0;
+
+        Log.i("Michael","下部Log , 子彈 Ｙ："+bulletY+" , 坦克下部Ｙ："+bottomY+" , rangeY : "+hitRangeDownY+" , rangeX : "+hitRangeX);
+
+        if (isHitDown){
+            clearEnemyTankPathHandler();
+            currentEnemyTankY = 0;
+            currentEnemyTankX = 0;
+            ivEnemyTank.setVisibility(INVISIBLE);
+            showExplosion();
+            Log.i("Michael","命中底部");
+            return true;
+        }
+
+
+        return false;
+    }
+
+    private void showExplosion() {
+        ivExplosion.setX(ivEnemyTank.getX());
+        ivExplosion.setY(ivEnemyTank.getY());
+        ivExplosion.setVisibility(VISIBLE);
+        Animator animator = AnimatorInflater.loadAnimator(getContext(),R.animator.scale_anim);
+        animator.setTarget(ivExplosion);
+        animator.start();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                ivExplosion.setVisibility(INVISIBLE);
+                handler.removeCallbacks(this);
+            }
+        },1500);
+    }
+
+    private void stopBullet() {
+        handler.removeCallbacks(bulletFlyLeftRunnable);
+        handler.removeCallbacks(bulletFlyDownRunnable);
+        handler.removeCallbacks(bulletFlyTopRunnable);
+        handler.removeCallbacks(bulletFlyRightRunnable);
+        ivUserFire.setVisibility(INVISIBLE);
+    }
+
     private void checkStatus(String status) {
-        switch (status){
+        switch (status) {
             case TOP:
                 isTop = true;
                 isLeft = false;
