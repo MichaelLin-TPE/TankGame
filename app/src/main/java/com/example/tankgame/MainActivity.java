@@ -57,6 +57,23 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onDown(MotionEvent e) {
                 Log.i("Michael","按下了 down");
+
+                if (isDown){
+                    mapView.onButtonDownLongPressListener();
+                    return false;
+                }
+                if (isTop){
+                    mapView.onButtonUpLongPressListener();
+                    return false;
+                }
+                if (isLeft){
+                    mapView.onButtonLeftLongPressListener();
+                    return false;
+                }
+                if (isRight){
+                    mapView.onButtonRightLongPressListener();
+                }
+
                 return false;
             }
 
@@ -69,22 +86,22 @@ public class MainActivity extends AppCompatActivity {
             public boolean onSingleTapUp(MotionEvent e) {
                 Log.i("Michael","按下了 SingleTapUp");
 
-                if (isDown){
-                    mapView.onButtonDownClickListener();
-                    return false;
-                }
-                if (isTop){
-                    mapView.onButtonUpClickListener();
-                    return false;
-                }
-                if (isLeft){
-                    mapView.onButtonLeftClickListener();
-                    return false;
-                }
-                if (isRight){
-                    mapView.onButtonRightClickListener();
-                    return false;
-                }
+//                if (isDown){
+//                    mapView.onButtonDownClickListener();
+//                    return false;
+//                }
+//                if (isTop){
+//                    mapView.onButtonUpClickListener();
+//                    return false;
+//                }
+//                if (isLeft){
+//                    mapView.onButtonLeftClickListener();
+//                    return false;
+//                }
+//                if (isRight){
+//                    mapView.onButtonRightClickListener();
+//                    return false;
+//                }
 
                 return false;
             }
@@ -98,21 +115,7 @@ public class MainActivity extends AppCompatActivity {
             public void onLongPress(MotionEvent e) {
                 Log.i("Michael","按下了 Long Press");
 
-                if (isDown){
-                    mapView.onButtonDownLongPressListener();
-                    return;
-                }
-                if (isTop){
-                    mapView.onButtonUpLongPressListener();
-                    return;
-                }
-                if (isLeft){
-                    mapView.onButtonLeftLongPressListener();
-                    return;
-                }
-                if (isRight){
-                    mapView.onButtonRightLongPressListener();
-                }
+
 
             }
 
