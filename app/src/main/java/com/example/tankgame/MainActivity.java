@@ -168,6 +168,7 @@ public class MainActivity extends AppCompatActivity {
                 return detector.onTouchEvent(event);
             }
         });
+        mapView.startEnemyTankPath();
 
     }
 

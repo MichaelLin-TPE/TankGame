@@ -29,7 +29,7 @@ public class MapView extends ConstraintLayout {
 
     private float maxRight, maxBottom, middleX, middleY, currentTankX, currentTankY, moveTankX, moveTankY, bulletY, bulletX;
 
-    private float currentEnemyTankX, currentEnemyTankY, moveEnemyTankX, moveEnemyTankY,enemyBulletY,enemyBulletX;
+    private float currentEnemyTankX, currentEnemyTankY, moveEnemyTankX, moveEnemyTankY, enemyBulletY, enemyBulletX;
 
     private boolean isLeft, isRight, isTop, isDown;
 
@@ -47,11 +47,21 @@ public class MapView extends ConstraintLayout {
 
     public static final int FIRE_SPEED = 2000;
 
+    private static final int ENEMY_TOP = 0;
+
+    private static final int ENEMY_DOWN = 1;
+
+    private static final int ENEMY_LEFT = 2;
+
+    private static final int ENEMY_RIGHT = 3;
+
+    private int secondCount = 0;
+
     private Paint paint;
 
     private View view;
 
-    private ImageView ivTank, ivUserFire, ivEnemyTank,ivExplosion,ivEnemyFire;
+    private ImageView ivTank, ivUserFire, ivEnemyTank, ivExplosion, ivEnemyFire;
 
     private ConstraintLayout rootView;
 
@@ -199,17 +209,40 @@ public class MapView extends ConstraintLayout {
         ivTank.setImageResource(R.drawable.tank);
         ivTank.setRotation(90f);
 
-
-        startEnemyTankPath();
-
     }
 
     //自定義敵人坦克的路徑
-    private void startEnemyTankPath() {
+    public void startEnemyTankPath() {
 
         //PK mode
 //        handler.postDelayed(pkModeTankRunnable,2000);
         //自定義路線
+
+        randomChosePath();
+
+
+    }
+
+    private void randomChosePath() {
+        int randomPath = (int) Math.floor(Math.random() * 4);
+        Log.i("Michael", "random : " + randomPath);
+        switch (randomPath) {
+            case ENEMY_DOWN:
+                moveEnemyDown();
+                break;
+            case ENEMY_TOP:
+                moveEnemyTop();
+                break;
+            case ENEMY_RIGHT:
+                moveEnemyRight();
+                break;
+            case ENEMY_LEFT:
+                moveEnemyLeft();
+                break;
+        }
+    }
+
+    private void moveEnemyLeft() {
         handler.postDelayed(enemyTankLeftPathRunnable, MOVE_SPEED);
     }
 
@@ -219,7 +252,7 @@ public class MapView extends ConstraintLayout {
         public void run() {
 
             float fireRangeY = Math.abs((currentEnemyTankY - currentTankY));
-            Log.i("Michael","myTank : "+currentTankX+" enemyTankY : "+currentEnemyTankX +" fireRangeY : "+fireRangeY);
+            Log.i("Michael", "myTank : " + currentTankX + " enemyTankY : " + currentEnemyTankX + " fireRangeY : " + fireRangeY);
             //如果 X 在同層的話，還要判斷是在上下左右發射
 
             boolean isSameY = fireRangeY <= ivTank.getHeight();
@@ -228,10 +261,10 @@ public class MapView extends ConstraintLayout {
 
             boolean isTankRight = currentEnemyTankX <= currentTankX;
 
-            if(isSameY){
-                Log.i("Michael","Y在同一層上");
-                enemyFire(isTankLeft,isTankRight,false,false);
-                handler.postDelayed(pkModeTankRunnable,2000);
+            if (isSameY) {
+                Log.i("Michael", "Y在同一層上");
+                enemyFire(isTankLeft, isTankRight, false, false);
+                handler.postDelayed(pkModeTankRunnable, 2000);
                 return;
             }
 
@@ -242,59 +275,60 @@ public class MapView extends ConstraintLayout {
             boolean isTankTop = currentEnemyTankY >= currentTankY;
 
             boolean isTankDown = currentEnemyTankY <= currentTankY;
-            if(isSameX){
-                Log.i("Michael","X 在同一層上");
-                enemyFire(false,false,isTankTop,isTankDown);
+            if (isSameX) {
+                Log.i("Michael", "X 在同一層上");
+                enemyFire(false, false, isTankTop, isTankDown);
             }
 
 
-            handler.postDelayed(pkModeTankRunnable,2000);
+            handler.postDelayed(pkModeTankRunnable, 2000);
 
 
         }
     };
+
     //敵人射擊 判斷方向
     private void enemyFire(boolean isTankLeft, boolean isTankRight, boolean isTankTop, boolean isTankDown) {
 
         ivEnemyFire.setVisibility(VISIBLE);
 
-        if (isTankLeft){
+        if (isTankLeft) {
             ivEnemyTank.setImageResource(R.drawable.tank);
             ivEnemyTank.setRotation(-90f);
 
             enemyBulletX = ivEnemyTank.getX();
             enemyBulletY = ivEnemyTank.getY() + (ivEnemyTank.getHeight() / 2f) - (ivEnemyFire.getHeight() / 2f);
-            handler.postDelayed(enemyFireLeftBulletRunnable,BULLET_SPEED);
+            handler.postDelayed(enemyFireLeftBulletRunnable, BULLET_SPEED);
 
             return;
         }
 
-        if (isTankRight){
+        if (isTankRight) {
             ivEnemyTank.setImageResource(R.drawable.tank);
             ivEnemyTank.setRotation(90f);
             enemyBulletY = ivEnemyTank.getY() + (ivEnemyTank.getHeight() / 2f) - (ivEnemyFire.getHeight() / 2f);
             enemyBulletX = ivEnemyTank.getX() + (ivEnemyTank.getWidth());
-            handler.postDelayed(enemyFireRightBulletRunnable,BULLET_SPEED);
+            handler.postDelayed(enemyFireRightBulletRunnable, BULLET_SPEED);
 
             return;
 
         }
 
-        if (isTankDown){
+        if (isTankDown) {
             ivEnemyTank.setImageResource(R.drawable.tank);
             ivEnemyTank.setRotation(180f);
             enemyBulletY = ivEnemyTank.getY() + ivEnemyTank.getHeight();
             enemyBulletX = ivEnemyTank.getX() + (ivEnemyTank.getWidth() / 2f) - (ivEnemyFire.getHeight() / 2f);
-            handler.postDelayed(enemyFireDownBulletRunnable,BULLET_SPEED);
+            handler.postDelayed(enemyFireDownBulletRunnable, BULLET_SPEED);
             return;
         }
 
-        if (isTankTop){
+        if (isTankTop) {
             ivEnemyTank.setImageResource(R.drawable.tank);
             ivEnemyTank.setRotation(0f);
             enemyBulletY = ivEnemyTank.getY();
             enemyBulletX = ivEnemyTank.getX() + (ivEnemyTank.getWidth() / 2f) - (ivEnemyFire.getHeight() / 2f);
-            handler.postDelayed(enemyFireTopBulletRunnable,BULLET_SPEED);
+            handler.postDelayed(enemyFireTopBulletRunnable, BULLET_SPEED);
             return;
         }
 
@@ -308,18 +342,18 @@ public class MapView extends ConstraintLayout {
 
         boolean isHitRightX = enemyBulletX >= currentTankX && hitRangeRightX <= ivTank.getHeight();
 
-        boolean isTouchTankY = enemyBulletY <= currentTankY+ivTank.getHeight() && enemyBulletY >= currentTankY;
+        boolean isTouchTankY = enemyBulletY <= currentTankY + ivTank.getHeight() && enemyBulletY >= currentTankY;
 
         boolean isHitRight = isHitRightX && isTouchTankY && enemyBulletX != 0 && enemyBulletY != 0;
 
-        if (isHitRight){
+        if (isHitRight) {
             clearEnemyTankPathHandler();
             currentTankY = 0;
             currentTankX = 0;
             ivTank.setVisibility(INVISIBLE);
             showEnemyExplosion();
 
-            Log.i("Michael","命中右部");
+            Log.i("Michael", "命中右部");
             return true;
         }
         float leftX = currentTankX + ivTank.getHeight();
@@ -330,13 +364,13 @@ public class MapView extends ConstraintLayout {
 
         boolean isHitLeft = isHitLeftX && isTouchTankY && enemyBulletX != 0 && enemyBulletY != 0;
 
-        if (isHitLeft){
+        if (isHitLeft) {
             clearEnemyTankPathHandler();
             currentTankY = 0;
             currentTankX = 0;
             ivTank.setVisibility(INVISIBLE);
             showEnemyExplosion();
-            Log.i("Michael","命中底部");
+            Log.i("Michael", "命中底部");
             return true;
         }
 
@@ -348,24 +382,23 @@ public class MapView extends ConstraintLayout {
     private boolean isTankStraightHit() {
 
 
-
         float hitRangeTopY = enemyBulletY - currentTankY;
 
         boolean isHitTopY = enemyBulletY >= currentTankY && hitRangeTopY < ivTank.getHeight();
 
-        boolean isTouchTankX = enemyBulletX <= currentTankX+ivTank.getHeight() && enemyBulletX >= currentTankX;
+        boolean isTouchTankX = enemyBulletX <= currentTankX + ivTank.getHeight() && enemyBulletX >= currentTankX;
 
 
         //do here
         boolean isHitTop = isHitTopY && isTouchTankX && enemyBulletX != 0 & enemyBulletY != 0;
-        if (isHitTop){
+        if (isHitTop) {
             clearEnemyTankPathHandler();
             currentTankY = 0;
             currentTankX = 0;
             ivTank.setVisibility(INVISIBLE);
             showEnemyExplosion();
 
-            Log.i("Michael","命中上部");
+            Log.i("Michael", "命中上部");
             return true;
         }
 
@@ -378,13 +411,13 @@ public class MapView extends ConstraintLayout {
 
         boolean isHitDown = isHitDownY && isTouchTankX && enemyBulletX != 0 & enemyBulletY != 0;
 
-        if (isHitDown){
+        if (isHitDown) {
             clearEnemyTankPathHandler();
             currentTankY = 0;
             currentTankX = 0;
             ivTank.setVisibility(INVISIBLE);
             showEnemyExplosion();
-            Log.i("Michael","命中底部");
+            Log.i("Michael", "命中底部");
             return true;
         }
 
@@ -396,7 +429,7 @@ public class MapView extends ConstraintLayout {
         ivExplosion.setX(ivTank.getX());
         ivExplosion.setY(ivTank.getY());
         ivExplosion.setVisibility(VISIBLE);
-        Animator animator = AnimatorInflater.loadAnimator(getContext(),R.animator.scale_anim);
+        Animator animator = AnimatorInflater.loadAnimator(getContext(), R.animator.scale_anim);
         animator.setTarget(ivExplosion);
         animator.start();
         handler.postDelayed(new Runnable() {
@@ -405,7 +438,7 @@ public class MapView extends ConstraintLayout {
                 ivExplosion.setVisibility(INVISIBLE);
                 handler.removeCallbacks(this);
             }
-        },1500);
+        }, 1500);
     }
 
     //清除敵人的Handler
@@ -416,6 +449,7 @@ public class MapView extends ConstraintLayout {
         handler.removeCallbacks(enemyFireDownBulletRunnable);
         ivEnemyFire.setVisibility(INVISIBLE);
     }
+
     //敵人子彈往左飛
     private Runnable enemyFireLeftBulletRunnable = new Runnable() {
         @Override
@@ -504,6 +538,9 @@ public class MapView extends ConstraintLayout {
         }
     };
 
+    private boolean isTurnWay(){
+        return (int) Math.floor(Math.random() * 2) == 0;
+    }
 
 
     //自定義的路線
@@ -517,9 +554,23 @@ public class MapView extends ConstraintLayout {
             ivEnemyTank.setRotation(-90f);
 
             moveEnemyTankX -= 20;
-            if (moveEnemyTankX <= 0f) {
-                moveEnemyTop();
+
+            secondCount += 50;
+
+            if (secondCount >= 2000 && isTurnWay()) {
+
+
                 handler.removeCallbacks(this);
+                randomChosePath();
+
+                secondCount = 0;
+                return;
+            }
+
+            if (moveEnemyTankX <= 0f) {
+                handler.removeCallbacks(this);
+                randomChosePath();
+                secondCount = 0;
                 return;
             }
             currentEnemyTankX = moveEnemyTankX;
@@ -538,10 +589,22 @@ public class MapView extends ConstraintLayout {
             ivEnemyTank.setImageResource(R.drawable.tank);
             ivEnemyTank.setRotation(0f);
             moveEnemyTankY -= 20;
+            secondCount += 50;
+
+            if (secondCount >= 2000 && isTurnWay()) {
+
+
+                handler.removeCallbacks(this);
+                randomChosePath();
+
+                secondCount = 0;
+                return;
+            }
 
             if (moveEnemyTankY <= 0) {
-                moveEnemyDown();
                 handler.removeCallbacks(this);
+                randomChosePath();
+                secondCount = 0;
                 return;
             }
             currentEnemyTankY = moveEnemyTankY;
@@ -551,7 +614,7 @@ public class MapView extends ConstraintLayout {
     };
 
     private void moveEnemyDown() {
-        handler.postDelayed(enemyTankDownPathRunnable,MOVE_SPEED);
+        handler.postDelayed(enemyTankDownPathRunnable, MOVE_SPEED);
     }
 
     private Runnable enemyTankDownPathRunnable = new Runnable() {
@@ -560,12 +623,20 @@ public class MapView extends ConstraintLayout {
             ivEnemyTank.setImageResource(R.drawable.tank);
             ivEnemyTank.setRotation(180f);
             moveEnemyTankY += 20;
+            secondCount += 50;
+
+
+            if (secondCount >= 2000 && isTurnWay()) {
+                handler.removeCallbacks(this);
+                randomChosePath();
+                secondCount = 0;
+                return;
+            }
 
             if (moveEnemyTankY >= maxBottom - ivEnemyTank.getHeight()) {
-
-                moveEnemyRight();
-
                 handler.removeCallbacks(this);
+                secondCount = 0;
+                randomChosePath();
                 return;
             }
             currentEnemyTankY = moveEnemyTankY;
@@ -576,7 +647,7 @@ public class MapView extends ConstraintLayout {
 
     private void moveEnemyRight() {
 
-        handler.postDelayed(enemyTankRightPathRunnable,MOVE_SPEED);
+        handler.postDelayed(enemyTankRightPathRunnable, MOVE_SPEED);
     }
 
     private Runnable enemyTankRightPathRunnable = new Runnable() {
@@ -586,16 +657,28 @@ public class MapView extends ConstraintLayout {
             ivEnemyTank.setImageResource(R.drawable.tank);
             ivEnemyTank.setRotation(90f);
             moveEnemyTankX += 20;
+            secondCount += 50;
 
-            if (moveEnemyTankX >= maxRight - ivEnemyTank.getHeight()){
-                moveEnemyTop();
+            if (secondCount >= 2000 && isTurnWay()) {
+
+
                 handler.removeCallbacks(this);
+                randomChosePath();
+
+                secondCount = 0;
+                return;
+            }
+
+            if (moveEnemyTankX >= maxRight - ivEnemyTank.getHeight()) {
+                handler.removeCallbacks(this);
+                randomChosePath();
+                secondCount = 0;
                 return;
             }
 
             currentEnemyTankX = moveEnemyTankX;
             setEnemyImageLocation();
-            handler.postDelayed(this,MOVE_SPEED);
+            handler.postDelayed(this, MOVE_SPEED);
         }
     };
 
@@ -603,6 +686,8 @@ public class MapView extends ConstraintLayout {
     private void clearEnemyTankPathHandler() {
         handler.removeCallbacks(enemyTankTopPathRunnable);
         handler.removeCallbacks(enemyTankLeftPathRunnable);
+        handler.removeCallbacks(enemyTankDownPathRunnable);
+        handler.removeCallbacks(enemyTankRightPathRunnable);
         handler.removeCallbacks(pkModeTankRunnable);
     }
 
@@ -613,21 +698,25 @@ public class MapView extends ConstraintLayout {
 
 
     //按往上的時候
+    @Deprecated
     public void onButtonUpClickListener() {
         moveTop();
     }
 
     //按往下的時候
+    @Deprecated
     public void onButtonDownClickListener() {
         moveDown();
     }
 
     //按往左的時候
+    @Deprecated
     public void onButtonLeftClickListener() {
         moveLeft();
     }
 
     //按往右的時候
+    @Deprecated
     public void onButtonRightClickListener() {
         moveRight();
     }
@@ -889,6 +978,7 @@ public class MapView extends ConstraintLayout {
             handler.postDelayed(this, BULLET_SPEED);
         }
     };
+
     private boolean isHorizontalHit() {
 
         float hitRangeRightX = bulletX - currentEnemyTankX;
@@ -899,17 +989,17 @@ public class MapView extends ConstraintLayout {
 
         boolean isHitRight = isHitRightX && isTouchTankY && bulletX != 0 && bulletY != 0;
 
-        if (isHitRight){
+        if (isHitRight) {
             clearEnemyTankPathHandler();
             currentEnemyTankY = 0;
             currentEnemyTankX = 0;
             ivEnemyTank.setVisibility(INVISIBLE);
             showExplosion();
-            Log.i("Michael","命中上部");
+            Log.i("Michael", "命中上部");
             return true;
         }
 
-        float leftX = currentEnemyTankX +ivTank.getHeight();
+        float leftX = currentEnemyTankX + ivTank.getHeight();
 
         float hitRangeLeftX = Math.abs(bulletX - leftX);
 
@@ -917,13 +1007,13 @@ public class MapView extends ConstraintLayout {
 
         boolean isHitLeft = isHitLeftX && isTouchTankY && bulletX != 0 && bulletY != 0;
 
-        if (isHitLeft){
+        if (isHitLeft) {
             clearEnemyTankPathHandler();
             currentEnemyTankY = 0;
             currentEnemyTankX = 0;
             ivEnemyTank.setVisibility(INVISIBLE);
             showExplosion();
-            Log.i("Michael","命中底部");
+            Log.i("Michael", "命中底部");
             return true;
         }
         return false;
@@ -937,16 +1027,16 @@ public class MapView extends ConstraintLayout {
 
         boolean isTouchTankX = bulletX <= currentEnemyTankX + ivEnemyTank.getHeight() && bulletX >= currentEnemyTankX;
 
-        Log.i("Michael","上部Log , 子彈 Ｙ："+bulletY+" , 坦克上部Ｙ："+currentEnemyTankY);
+        Log.i("Michael", "上部Log , 子彈 Ｙ：" + bulletY + " , 坦克上部Ｙ：" + currentEnemyTankY);
         //do here
         boolean isHitTop = isHitTopY && isTouchTankX && bulletX != 0 & bulletY != 0;
-        if (isHitTop){
+        if (isHitTop) {
             clearEnemyTankPathHandler();
             currentEnemyTankY = 0;
             currentEnemyTankX = 0;
             ivEnemyTank.setVisibility(INVISIBLE);
             showExplosion();
-            Log.i("Michael","命中上部");
+            Log.i("Michael", "命中上部");
             return true;
         }
 
@@ -958,15 +1048,15 @@ public class MapView extends ConstraintLayout {
 
         boolean isHitDown = isHitDownY && isTouchTankX && bulletX != 0 & bulletY != 0;
 
-        Log.i("Michael","下部Log , 子彈 Ｙ："+bulletY+" , 坦克下部Ｙ："+bottomY+" , rangeY : "+hitRangeDownY);
+        Log.i("Michael", "下部Log , 子彈 Ｙ：" + bulletY + " , 坦克下部Ｙ：" + bottomY + " , rangeY : " + hitRangeDownY);
 
-        if (isHitDown){
+        if (isHitDown) {
             clearEnemyTankPathHandler();
             currentEnemyTankY = 0;
             currentEnemyTankX = 0;
             ivEnemyTank.setVisibility(INVISIBLE);
             showExplosion();
-            Log.i("Michael","命中底部");
+            Log.i("Michael", "命中底部");
             return true;
         }
 
@@ -978,7 +1068,7 @@ public class MapView extends ConstraintLayout {
         ivExplosion.setX(ivEnemyTank.getX());
         ivExplosion.setY(ivEnemyTank.getY());
         ivExplosion.setVisibility(VISIBLE);
-        Animator animator = AnimatorInflater.loadAnimator(getContext(),R.animator.scale_anim);
+        Animator animator = AnimatorInflater.loadAnimator(getContext(), R.animator.scale_anim);
         animator.setTarget(ivExplosion);
         animator.start();
         handler.postDelayed(new Runnable() {
@@ -987,7 +1077,7 @@ public class MapView extends ConstraintLayout {
                 ivExplosion.setVisibility(INVISIBLE);
                 handler.removeCallbacks(this);
             }
-        },1500);
+        }, 1500);
     }
 
     private void stopBullet() {
