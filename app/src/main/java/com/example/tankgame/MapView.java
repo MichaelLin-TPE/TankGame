@@ -6,11 +6,8 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 
 import android.graphics.Canvas;
-import android.graphics.Color;
 
-import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Path;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -18,7 +15,6 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
-import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
@@ -31,7 +27,7 @@ public class MapView extends ConstraintLayout {
 
     private float currentEnemyTankX, currentEnemyTankY, moveEnemyTankX, moveEnemyTankY, enemyBulletY, enemyBulletX;
 
-    private boolean isLeft, isRight, isTop, isDown;
+    private boolean isLeft, isRight, isTop, isDown, isUserBulletComing, isEnemyLeft, isEnemyRight, isEnemyTop, isEnemyDown;
 
     public static final String LEFT = "left";
 
@@ -215,12 +211,137 @@ public class MapView extends ConstraintLayout {
     public void startEnemyTankPath() {
 
         //PK mode
-//        handler.postDelayed(pkModeTankRunnable,2000);
+        handler.postDelayed(pkModeTankRunnable, 2000);
         //自定義路線
 
         randomChosePath();
 
+        //子彈來襲進行閃躲
+//        dodgeBullet();
+    }
 
+
+    //這個還有很大的問題
+    private void dodgeBullet() {
+        handler.postDelayed(checkBulletClosingRunnable, 50);
+    }
+
+    private Runnable checkBulletClosingRunnable = new Runnable() {
+        @Override
+        public void run() {
+            //子彈來襲進行閃躲
+            if (!isUserBulletComing){
+                handler.post(this);
+                return;
+            }
+            boolean isSameY = Math.abs(bulletY - currentEnemyTankY) <= ivEnemyTank.getHeight() * 2;
+
+            boolean isSameX = Math.abs(bulletX - currentEnemyTankX) <= ivEnemyTank.getHeight() * 2;
+
+            Log.i("Michael", "是否碰到Ｙ：" + isSameY + " , 是否碰到Ｘ：" + isSameX);
+
+
+            if (isEnemyLeft) {
+
+                if (isSameX){
+                    doCheckTurnRightOrLeft();
+                    return;
+                }
+
+                if (isSameY) {
+                    handler.removeCallbacks(enemyTankLeftPathRunnable);
+                    moveEnemyTop();
+                    isUserBulletComing = false;
+                    handler.removeCallbacks(this);
+                    return;
+                }
+                handler.postDelayed(this, 50);
+                return;
+            }
+
+            if (isEnemyRight) {
+
+                if (isSameX){
+                    doCheckTurnRightOrLeft();
+                    return;
+                }
+
+                if (isSameY) {
+                    handler.removeCallbacks(enemyTankRightPathRunnable);
+                    moveEnemyDown();
+                    isUserBulletComing = false;
+                    handler.removeCallbacks(this);
+                    return;
+                }
+
+                handler.postDelayed(this, 50);
+                return;
+            }
+
+            if (isEnemyTop) {
+
+                if (isSameX){
+                    doCheckTurnRightOrLeft();
+                    return;
+                }
+
+
+                if (isSameY) {
+                    handler.removeCallbacks(enemyTankTopPathRunnable);
+                    moveEnemyDown();
+                    isUserBulletComing = false;
+                    handler.removeCallbacks(this);
+                    return;
+                }
+
+                handler.postDelayed(this, 50);
+                return;
+            }
+
+            if (isEnemyDown) {
+
+                if (isSameX){
+                    doCheckTurnRightOrLeft();
+                    return;
+                }
+
+                if (isSameY) {
+                    handler.removeCallbacks(enemyTankDownPathRunnable);
+                    moveEnemyTop();
+                    isUserBulletComing = false;
+                    handler.removeCallbacks(this);
+
+                }
+                handler.postDelayed(this, 50);
+            }
+
+
+        }
+    };
+
+    private void doCheckTurnRightOrLeft() {
+
+        boolean isCloseLeft = bulletX - currentTankX <= 0;
+
+        boolean isCloseRight = bulletX - currentTankX >= 0;
+
+        Log.i("Michael","靠近左邊："+isCloseLeft + " , 靠近右邊 ："+isCloseRight);
+
+        if (isCloseLeft) {
+            secondCount = 0;
+            clearEnemyTankPathHandler();
+            moveEnemyRight();
+            isUserBulletComing = false;
+            handler.removeCallbacks(checkBulletClosingRunnable);
+            return;
+        }
+        if (isCloseRight) {
+            secondCount = 0;
+            clearEnemyTankPathHandler();
+            moveEnemyLeft();
+            isUserBulletComing = false;
+            handler.removeCallbacks(checkBulletClosingRunnable);
+        }
     }
 
     private void randomChosePath() {
@@ -243,6 +364,7 @@ public class MapView extends ConstraintLayout {
     }
 
     private void moveEnemyLeft() {
+        checkEnemyStatus(LEFT);
         handler.postDelayed(enemyTankLeftPathRunnable, MOVE_SPEED);
     }
 
@@ -447,6 +569,7 @@ public class MapView extends ConstraintLayout {
         handler.removeCallbacks(enemyFireRightBulletRunnable);
         handler.removeCallbacks(enemyFireTopBulletRunnable);
         handler.removeCallbacks(enemyFireDownBulletRunnable);
+        handler.removeCallbacks(pkModeTankRunnable);
         ivEnemyFire.setVisibility(INVISIBLE);
     }
 
@@ -538,7 +661,7 @@ public class MapView extends ConstraintLayout {
         }
     };
 
-    private boolean isTurnWay(){
+    private boolean isTurnWay() {
         return (int) Math.floor(Math.random() * 2) == 0;
     }
 
@@ -580,6 +703,7 @@ public class MapView extends ConstraintLayout {
     };
 
     private void moveEnemyTop() {
+        checkEnemyStatus(TOP);
         handler.postDelayed(enemyTankTopPathRunnable, MOVE_SPEED);
     }
 
@@ -614,7 +738,37 @@ public class MapView extends ConstraintLayout {
     };
 
     private void moveEnemyDown() {
+        checkEnemyStatus(DOWN);
         handler.postDelayed(enemyTankDownPathRunnable, MOVE_SPEED);
+    }
+
+    private void checkEnemyStatus(String status) {
+        switch (status) {
+            case DOWN:
+                isEnemyDown = true;
+                isEnemyTop = false;
+                isEnemyLeft = false;
+                isEnemyRight = false;
+                break;
+            case TOP:
+                isEnemyDown = false;
+                isEnemyTop = true;
+                isEnemyLeft = false;
+                isEnemyRight = false;
+                break;
+            case LEFT:
+                isEnemyDown = false;
+                isEnemyTop = false;
+                isEnemyLeft = true;
+                isEnemyRight = false;
+                break;
+            case RIGHT:
+                isEnemyDown = false;
+                isEnemyTop = false;
+                isEnemyLeft = false;
+                isEnemyRight = true;
+                break;
+        }
     }
 
     private Runnable enemyTankDownPathRunnable = new Runnable() {
@@ -646,7 +800,7 @@ public class MapView extends ConstraintLayout {
     };
 
     private void moveEnemyRight() {
-
+        checkEnemyStatus(RIGHT);
         handler.postDelayed(enemyTankRightPathRunnable, MOVE_SPEED);
     }
 
@@ -688,7 +842,7 @@ public class MapView extends ConstraintLayout {
         handler.removeCallbacks(enemyTankLeftPathRunnable);
         handler.removeCallbacks(enemyTankDownPathRunnable);
         handler.removeCallbacks(enemyTankRightPathRunnable);
-        handler.removeCallbacks(pkModeTankRunnable);
+
     }
 
     private void setEnemyImageLocation() {
@@ -839,7 +993,8 @@ public class MapView extends ConstraintLayout {
     public void onButtonFireClickListener() {
 
         ivUserFire.setVisibility(VISIBLE);
-
+        isUserBulletComing = true;
+        dodgeBullet();
         if (isRight) {
 
             bulletY = ivTank.getY() + (ivTank.getHeight() / 2f) - (ivUserFire.getHeight() / 2f);
@@ -878,6 +1033,8 @@ public class MapView extends ConstraintLayout {
     }
 
     private void doBulletFly() {
+
+
         if (isRight) {
             handler.postDelayed(bulletFlyRightRunnable, BULLET_SPEED);
             return;
@@ -1086,6 +1243,7 @@ public class MapView extends ConstraintLayout {
         handler.removeCallbacks(bulletFlyTopRunnable);
         handler.removeCallbacks(bulletFlyRightRunnable);
         ivUserFire.setVisibility(INVISIBLE);
+        isUserBulletComing = false;
     }
 
     private void checkStatus(String status) {
