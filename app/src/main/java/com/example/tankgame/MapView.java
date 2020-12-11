@@ -255,6 +255,7 @@ public class MapView extends ConstraintLayout {
                     handler.removeCallbacks(this);
                     return;
                 }
+                //
                 handler.postDelayed(this, 50);
                 return;
             }
