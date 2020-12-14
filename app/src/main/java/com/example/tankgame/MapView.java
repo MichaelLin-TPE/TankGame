@@ -5,10 +5,14 @@ import android.animation.AnimatorInflater;
 import android.annotation.SuppressLint;
 import android.content.Context;
 
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 
+import android.graphics.Color;
 import android.graphics.Paint;
 
+import android.graphics.Path;
+import android.graphics.RectF;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
@@ -50,6 +54,9 @@ public class MapView extends ConstraintLayout {
     private static final int ENEMY_LEFT = 2;
 
     private static final int ENEMY_RIGHT = 3;
+
+    //柱子座標
+    private float squareWidth, squareHeight;
 
     private int secondCount = 0;
 
@@ -139,54 +146,58 @@ public class MapView extends ConstraintLayout {
         maxBottom = (float) view.getBottom();
         maxRight = (float) view.getRight();
 
-        //先去掉線
 
-//        float leftUpY = middleY - 100;
-//
-//        float rightUpY = middleY - 100;
-//
-//        float leftUpX = middleX - 100;
-//
-//        float rightUpX = middleX + 100;
-//
-//        float leftDownX = middleX - 100;
-//
-//        float rightDownX = middleX + 100;
-//
-//        float leftDownY = middleY + 100;
-//
-//        paint = new Paint();
-//        paint.setStrokeWidth(5f);
-//        paint.setColor(Color.GRAY);
-//        paint.setStyle(Paint.Style.STROKE);
-//        Path path = new Path();
-//        //左邊的線
-//        path.moveTo(0f, leftUpY);
-//        path.lineTo(leftUpX, leftUpY);
-//        path.lineTo(leftUpX, 0f);
-//
-//        //右邊邊的線
-//        path.moveTo(maxRight, rightUpY);
-//        path.lineTo(rightUpX, rightUpY);
-//        path.lineTo(rightUpX, 0f);
-//
-//
-//        //左下的線
-//        path.moveTo(leftDownX, maxBottom);
-//        path.lineTo(leftDownX, leftDownY);
-//        path.lineTo(0, leftDownY);
-//
-//        //右下的線
-//        path.moveTo(rightDownX, maxBottom);
-//        path.lineTo(rightDownX, leftDownY);
-//        path.lineTo(maxRight, leftDownY);
-//
-//        canvas.drawPath(path, paint);
+        //試者畫紅色實心柱子
+        paint = new Paint();
+        paint.setStrokeWidth(4f);
+        paint.setColor(Color.RED);
+        paint.setStyle(Paint.Style.STROKE);
+
+        squareWidth = maxRight / 7;
+
+        squareHeight = maxBottom / 8;
+
+        Log.i("Michael", "平均寬：" + squareWidth + " , 平均高：" + squareHeight);
+
+        //第一排
+        canvas.drawRect(squareWidth * 1f, squareWidth * 1f, squareWidth * 2, squareWidth * 2, paint);
+
+        canvas.drawRect(squareWidth * 3, squareWidth * 1f, squareWidth * 4, squareWidth * 2, paint);
+
+        canvas.drawRect(squareWidth * 5, squareWidth * 1f, squareWidth * 6, squareWidth * 2, paint);
+
+        //第二排
+        canvas.drawRect(squareWidth * 1f, squareWidth * 3, squareWidth * 2, squareWidth * 4, paint);
+
+        canvas.drawRect(squareWidth * 3, squareWidth * 3, squareWidth * 4, squareWidth * 4, paint);
+
+        canvas.drawRect(squareWidth * 5, squareWidth * 3, squareWidth * 6, squareWidth * 4, paint);
+
+        //第三排
+        canvas.drawRect(squareWidth * 1f, squareWidth * 5, squareWidth * 2, squareWidth * 6, paint);
+
+        canvas.drawRect(squareWidth * 3, squareWidth * 5, squareWidth * 4, squareWidth * 6, paint);
+
+        canvas.drawRect(squareWidth * 5, squareWidth * 5, squareWidth * 6, squareWidth * 6, paint);
+
+        //第四排
+        canvas.drawRect(squareWidth * 1f, squareWidth * 7, squareWidth * 2, squareWidth * 8, paint);
+
+        canvas.drawRect(squareWidth * 3, squareWidth * 7, squareWidth * 4, squareWidth * 8, paint);
+
+        canvas.drawRect(squareWidth * 5, squareWidth * 7, squareWidth * 6, squareWidth * 8, paint);
+
+
+        Path path = new Path();
+        path.moveTo(0f, squareWidth * 9f);
+        path.lineTo(maxRight * 1f, squareWidth * 9f);
+        canvas.drawPath(path, paint);
+
 
         //敵人坦克的位置
         Log.i("Michael", "enemyTank width : " + ivEnemyTank.getWidth());
         currentEnemyTankX = maxRight - ivEnemyTank.getWidth();
-        currentEnemyTankY = 0 + 80f;
+        currentEnemyTankY = 0 + 10f;
         moveEnemyTankX = currentEnemyTankX;
         moveEnemyTankY = currentEnemyTankY;
         ivEnemyTank.setX(currentEnemyTankX);
@@ -211,7 +222,7 @@ public class MapView extends ConstraintLayout {
     public void startEnemyTankPath() {
 
         //PK mode
-        handler.postDelayed(pkModeTankRunnable, 2000);
+//        handler.postDelayed(pkModeTankRunnable, 2000);
         //自定義路線
 
         randomChosePath();
@@ -230,7 +241,7 @@ public class MapView extends ConstraintLayout {
         @Override
         public void run() {
             //子彈來襲進行閃躲
-            if (!isUserBulletComing){
+            if (!isUserBulletComing) {
                 handler.post(this);
                 return;
             }
@@ -243,7 +254,7 @@ public class MapView extends ConstraintLayout {
 
             if (isEnemyLeft) {
 
-                if (isSameX){
+                if (isSameX) {
                     doCheckTurnRightOrLeft();
                     return;
                 }
@@ -262,7 +273,7 @@ public class MapView extends ConstraintLayout {
 
             if (isEnemyRight) {
 
-                if (isSameX){
+                if (isSameX) {
                     doCheckTurnRightOrLeft();
                     return;
                 }
@@ -281,7 +292,7 @@ public class MapView extends ConstraintLayout {
 
             if (isEnemyTop) {
 
-                if (isSameX){
+                if (isSameX) {
                     doCheckTurnRightOrLeft();
                     return;
                 }
@@ -301,7 +312,7 @@ public class MapView extends ConstraintLayout {
 
             if (isEnemyDown) {
 
-                if (isSameX){
+                if (isSameX) {
                     doCheckTurnRightOrLeft();
                     return;
                 }
@@ -326,7 +337,7 @@ public class MapView extends ConstraintLayout {
 
         boolean isCloseRight = bulletX - currentTankX >= 0;
 
-        Log.i("Michael","靠近左邊："+isCloseLeft + " , 靠近右邊 ："+isCloseRight);
+        Log.i("Michael", "靠近左邊：" + isCloseLeft + " , 靠近右邊 ：" + isCloseRight);
 
         if (isCloseLeft) {
             secondCount = 0;
@@ -452,7 +463,6 @@ public class MapView extends ConstraintLayout {
             enemyBulletY = ivEnemyTank.getY();
             enemyBulletX = ivEnemyTank.getX() + (ivEnemyTank.getWidth() / 2f) - (ivEnemyFire.getHeight() / 2f);
             handler.postDelayed(enemyFireTopBulletRunnable, BULLET_SPEED);
-            return;
         }
 
     }
@@ -681,15 +691,23 @@ public class MapView extends ConstraintLayout {
 
             secondCount += 50;
 
-            if (secondCount >= 2000 && isTurnWay()) {
-
-
+            if (checkTurnRightOrLeftWay() && secondCount >= 500) {
                 handler.removeCallbacks(this);
                 randomChosePath();
-
                 secondCount = 0;
                 return;
             }
+
+
+//            if (secondCount >= 2000 && isTurnWay()) {
+//
+//
+//                handler.removeCallbacks(this);
+//                randomChosePath();
+//
+//                secondCount = 0;
+//                return;
+//            }
 
             if (moveEnemyTankX <= 0f) {
                 handler.removeCallbacks(this);
@@ -716,15 +734,22 @@ public class MapView extends ConstraintLayout {
             moveEnemyTankY -= 20;
             secondCount += 50;
 
-            if (secondCount >= 2000 && isTurnWay()) {
-
-
+            if (checkTurnDownOrUpWay() && secondCount >= 500) {
                 handler.removeCallbacks(this);
                 randomChosePath();
-
                 secondCount = 0;
                 return;
             }
+
+//            if (secondCount >= 2000 && isTurnWay()) {
+//
+//
+//                handler.removeCallbacks(this);
+//                randomChosePath();
+//
+//                secondCount = 0;
+//                return;
+//            }
 
             if (moveEnemyTankY <= 0) {
                 handler.removeCallbacks(this);
@@ -772,6 +797,22 @@ public class MapView extends ConstraintLayout {
         }
     }
 
+    private boolean checkTurnDownOrUpWay() {
+
+        int firstLineCheck = 5;
+
+        int secondLineCheck = (int) (squareWidth * 2 + 5);
+
+        int thirdLineCheck = (int) (squareWidth * 4 + 5);
+
+        int turnWayRange = 5;
+
+        return Math.abs(currentEnemyTankY - firstLineCheck) <= turnWayRange
+                || Math.abs(currentEnemyTankY - secondLineCheck) <= turnWayRange
+                || Math.abs(currentEnemyTankY - thirdLineCheck) <= turnWayRange;
+    }
+
+
     private Runnable enemyTankDownPathRunnable = new Runnable() {
         @Override
         public void run() {
@@ -781,16 +822,36 @@ public class MapView extends ConstraintLayout {
             secondCount += 50;
 
 
-            if (secondCount >= 2000 && isTurnWay()) {
+            //新的判斷是否需要轉彎
+            if (checkTurnDownOrUpWay() && secondCount >= 500) {
                 handler.removeCallbacks(this);
                 randomChosePath();
                 secondCount = 0;
                 return;
             }
 
-            if (moveEnemyTankY >= maxBottom - ivEnemyTank.getHeight()) {
+            //舊的隨機方向，先註解掉
+//            if (secondCount >= 2000 && isTurnWay()) {
+//                handler.removeCallbacks(this);
+//                randomChosePath();
+//                secondCount = 0;
+//                return;
+//            }
+            float bottomMaxY = (squareWidth * 9) - ivEnemyTank.getHeight() - 10;
+
+            if (moveEnemyTankY >= bottomMaxY) {
                 handler.removeCallbacks(this);
                 secondCount = 0;
+                boolean isOnRight = currentEnemyTankX + ivEnemyTank.getHeight() >= maxRight || Math.abs(maxRight - (currentEnemyTankX + ivEnemyTank.getHeight())) < 10;
+                boolean isOnLeft = currentEnemyTankX <= 10;
+                if (isOnRight) {
+                    moveEnemyLeft();
+                    return;
+                }
+                if (isOnLeft) {
+                    moveEnemyRight();
+                    return;
+                }
                 randomChosePath();
                 return;
             }
@@ -805,6 +866,21 @@ public class MapView extends ConstraintLayout {
         handler.postDelayed(enemyTankRightPathRunnable, MOVE_SPEED);
     }
 
+    private boolean checkTurnRightOrLeftWay() {
+        int firstLineCheck = 5;
+
+        int secondLineCheck = (int) (squareWidth * 2 + 5);
+
+        int thirdLineCheck = (int) (squareWidth * 4 + 5);
+
+        int turnWayRange = 5;
+
+        return Math.abs(currentEnemyTankX - firstLineCheck) <= turnWayRange
+                || Math.abs(currentEnemyTankX - secondLineCheck) <= turnWayRange
+                || Math.abs(currentEnemyTankX - thirdLineCheck) <= turnWayRange;
+    }
+
+
     private Runnable enemyTankRightPathRunnable = new Runnable() {
         @Override
         public void run() {
@@ -814,15 +890,22 @@ public class MapView extends ConstraintLayout {
             moveEnemyTankX += 20;
             secondCount += 50;
 
-            if (secondCount >= 2000 && isTurnWay()) {
-
-
+            if (checkTurnRightOrLeftWay() && secondCount >= 500) {
                 handler.removeCallbacks(this);
                 randomChosePath();
-
                 secondCount = 0;
                 return;
             }
+
+
+//            if (secondCount >= 2000 && isTurnWay()) {
+//
+//                handler.removeCallbacks(this);
+//                randomChosePath();
+//
+//                secondCount = 0;
+//                return;
+//            }
 
             if (moveEnemyTankX >= maxRight - ivEnemyTank.getHeight()) {
                 handler.removeCallbacks(this);
@@ -930,8 +1013,12 @@ public class MapView extends ConstraintLayout {
         ivTank.setImageResource(R.drawable.tank);
         ivTank.setRotation(180f);
 
+        if (!isTurnTopOk()){
+            return;
+        }
+
         moveTankY += 20;
-        if (moveTankY >= maxBottom) {
+        if (moveTankY+ivTank.getHeight() >= squareWidth * 9f) {
             moveTankY = currentTankY;
         }
 
@@ -945,6 +1032,11 @@ public class MapView extends ConstraintLayout {
     private void moveTop() {
         ivTank.setImageResource(R.drawable.tank);
         ivTank.setRotation(0f);
+
+        if (!isTurnTopOk()) {
+            return;
+        }
+
         moveTankY -= 20;
         if (moveTankY <= 0) {
             moveTankY = currentTankY;
@@ -958,6 +1050,11 @@ public class MapView extends ConstraintLayout {
         ivTank.setImageResource(R.drawable.tank);
         ivTank.setRotation(-90f);
 
+        //如果不行轉向的話 不做任何事情
+        if (!isTurnLeftOk()) {
+            return;
+        }
+
         moveTankX -= 20;
         if (moveTankX <= 0) {
             moveTankX = currentTankX;
@@ -965,15 +1062,66 @@ public class MapView extends ConstraintLayout {
 
         currentTankX = moveTankX;
         checkStatus(LEFT);
+
+
         setImageLocation();
+    }
+
+
+    private boolean isTurnTopOk() {
+        int secondY = 5;
+        int thirdY = (int) squareWidth * 2;
+        int fourthY = (int) squareWidth * 4;
+        int fiveY = (int) squareWidth * 6;
+
+
+        Log.i("Michael", "CurrentX : " + currentTankX + " , squareWidth : " + squareWidth);
+
+        return Math.abs(currentTankX - secondY) <= 20
+                || Math.abs(currentTankX - thirdY) <= 20
+                || Math.abs(currentTankX - fourthY) <= 20
+                || Math.abs(currentTankX - fiveY) <= 20
+                || Math.abs(currentTankX + ivTank.getHeight() - maxRight) <= 20
+                || Math.abs(currentTankX + ivTank.getHeight() - squareWidth) <= 20
+                || Math.abs(currentTankX + ivTank.getHeight() - squareWidth * 3) <= 20
+                || Math.abs(currentTankX + ivTank.getHeight() - squareWidth * 5) <= 20
+                || Math.abs(currentTankX + ivTank.getHeight() - squareWidth * 7) <= 20;
+    }
+
+
+    private boolean isTurnLeftOk() {
+
+        int firstY = 5;
+        int secondY = (int) squareWidth * 2;
+        int thirdY = (int) squareWidth * 4;
+        int fourthY = (int) squareWidth * 6;
+        int fiveY = (int) squareWidth * 8;
+
+        Log.i("Michael", "currentY : " + currentTankY + " , squareWidth : " + squareWidth + " , squareWidth * 2 : " + squareWidth * 2 + " , squareWidth * 4 : " + squareWidth * 4
+                + " , squareWidth * 6 : " + squareWidth * 6 + " , squareWidth * 8 : " + squareWidth * 8);
+
+        return Math.abs(currentTankY - firstY) <= 20
+                || Math.abs(currentTankY - secondY) <= 20
+                || Math.abs(currentTankY - thirdY) <= 20
+                || Math.abs(currentTankY - fourthY) <= 20
+                || Math.abs(currentTankY - fiveY) <= 20
+                || Math.abs(currentTankY + ivTank.getHeight() - squareWidth) <= 20
+                || Math.abs(currentTankY + ivTank.getHeight() - squareWidth * 3) <= 20
+                || Math.abs(currentTankY + ivTank.getHeight() - squareWidth * 5) <= 20
+                || Math.abs(currentTankY + ivTank.getHeight() - squareWidth * 7) <= 20;
     }
 
     private void moveRight() {
         ivTank.setImageResource(R.drawable.tank);
         ivTank.setRotation(90f);
+
+        if (!isTurnLeftOk()){
+            return;
+        }
+
         moveTankX += 20;
 
-        if (moveTankX >= maxRight) {
+        if (moveTankX + ivTank.getHeight() >= maxRight) {
             moveTankX = currentTankX;
         }
 

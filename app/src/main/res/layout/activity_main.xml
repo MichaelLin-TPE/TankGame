@@ -10,10 +10,10 @@
 
     <com.example.tankgame.MapView
         android:id="@+id/map"
+        app:layout_constraintBottom_toTopOf="@id/btn_up"
+        android:layout_marginBottom="15dp"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:layout_editor_absoluteX="-41dp"
-        tools:layout_editor_absoluteY="-54dp" />
+        android:layout_height="match_parent" />
 
     <Button
         android:id="@+id/btn_down"
